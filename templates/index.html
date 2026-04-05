@@ -1,0 +1,178 @@
+<!doctype html>
+<html>
+<head>
+<title>Smart AI Surveillance</title>
+<style>
+body{margin:0;background:#020617;color:#e5e7eb;font-family:Arial}
+header{padding:12px;border-bottom:1px solid #334155;text-align:center}
+header h1{margin:0;color:#38bdf8;letter-spacing:2px}
+.container{display:flex;height:calc(100vh - 70px)}
+.left{width:65%;padding:10px}
+.right{width:35%;padding:10px;border-left:1px solid #334155;overflow:auto}
+video,img{width:100%;border:1px solid #334155;border-radius:6px}
+.section h3{margin:8px 0;color:#22d3ee;font-size:18px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.card{border:1px solid #334155;border-radius:6px;padding:6px}
+canvas{width:100%;background:black;border-radius:4px}
+button{margin:2px;padding:4px 8px;border:none;border-radius:4px;cursor:pointer}
+.btn{background:#2563eb;color:white}
+.btn-del{background:#7f1d1d;color:white}
+.btn-form{background:#16a34a;color:white}
+.meta{font-size:11px;margin-top:4px}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>SMART AI SURVEILLANCE SYSTEM</h1>
+  <input type="file" id="file">
+  <button class="btn" onclick="upload()">Upload</button>
+</header>
+
+<div class="container">
+  <div class="left">
+    <video id="video" controls style="display:none"></video>
+    <img id="image" style="display:none">
+  </div>
+
+  <div class="right">
+    <div class="section">
+      <h3>PERSON</h3>
+      <div id="person" class="grid"></div>
+    </div>
+    <div class="section">
+      <h3>VEHICLE</h3>
+      <div id="vehicle" class="grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentSource=null;
+let frameIndex={};
+let pollTimer=null;
+
+function upload(){
+  const f=document.getElementById("file").files[0];
+  if(!f){alert("Upload file");return;}
+
+  const fd=new FormData();
+  fd.append("file",f);
+
+  fetch("/upload",{method:"POST",body:fd})
+  .then(r=>r.json())
+  .then(d=>{
+    currentSource=d.source;
+
+    if(d.type==="video"){
+      image.style.display="none";
+      video.style.display="block";
+      video.src="/uploads/"+d.source;
+    }else{
+      video.style.display="none";
+      image.style.display="block";
+      image.src="/uploads/"+d.source;
+    }
+
+    if(pollTimer) clearInterval(pollTimer);
+    pollTimer=setInterval(fetchNewAlerts,1000);
+  });
+}
+
+function fetchNewAlerts(){
+  if(!currentSource) return;
+
+  fetch(`/poll_alerts?source=${currentSource}`)
+  .then(r=>r.json())
+  .then(alerts=>{
+    alerts.forEach(a=>{
+      if(frameIndex[a.id]===undefined){
+        frameIndex[a.id]=0;
+        addAlertCard(a);
+      }
+    });
+  });
+}
+
+function addAlertCard(a){
+  if(document.getElementById("card"+a.id)) return;
+
+  const card=document.createElement("div");
+  card.className="card";
+  card.id="card"+a.id;
+
+  card.innerHTML=`
+    <canvas id="c${a.id}" width="200" height="120"></canvas>
+    <div class="meta">ID: ${a.id}<br>${a.name}</div>
+    <button class="btn" onclick="nav(${a.id},-1)">Prev</button>
+    <button class="btn" onclick="nav(${a.id},1)">Next</button>
+    <button class="btn-form" onclick="openForm(${a.id}, '${a.name}')">FORM</button>
+    <button class="btn-del" onclick="del(${a.id})">Delete</button>
+  `;
+
+  if(a.name==="person")
+    document.getElementById("person").appendChild(card);
+  else
+    document.getElementById("vehicle").appendChild(card);
+
+  loadCrop(a.id);   // 🔥 VERY IMPORTANT
+}
+
+function openForm(id, cls){
+  const frame=frameIndex[id]||0;
+
+  let base="";
+  if(cls==="person"){
+    base="/person";
+  }else{
+    base="/vehicle";
+  }
+
+  window.open(
+    `${base}?source=${currentSource}&tracking_id=${id}&frame_index=${frame}`,
+    "_blank"
+  );
+}
+
+function nav(id,dir){
+  frameIndex[id]+=dir;
+  if(frameIndex[id]<0) frameIndex[id]=0;
+  loadCrop(id);
+}
+
+function loadCrop(id){
+  fetch(`/crop?source=${currentSource}&id=${id}&index=${frameIndex[id]}`)
+  .then(r=>r.json())
+  .then(d=>{
+    frameIndex[id]=d.index;
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.getElementById("c"+id);
+      const ctx=c.getContext("2d");
+
+      const maxW=200;
+      const ratio=img.height/img.width;
+      c.width=maxW;
+      c.height=maxW*ratio;
+
+      ctx.clearRect(0,0,c.width,c.height);
+      ctx.drawImage(img,0,0,c.width,c.height);
+    };
+    img.src="data:image/jpeg;base64,"+d.image;
+  });
+}
+
+function del(id){
+  fetch("/delete_tracking_id",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({source:currentSource,id:id})
+  }).then(()=>{
+    const el=document.getElementById("card"+id);
+    if(el) el.remove();
+    delete frameIndex[id];
+  });
+}
+</script>
+</body>
+</html>

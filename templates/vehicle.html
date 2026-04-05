@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+<title>Vehicle Entry ({{ tracking_id }})</title>
+<style>
+body{font-family:Arial;background:#020617;color:#e5e7eb;margin:0;padding:16px}
+h2{color:#38bdf8}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{border:1px solid #334155;border-radius:10px;padding:8px}
+img,video{width:100%;border-radius:8px;border:1px solid #334155}
+.form-box{margin-top:18px;border:1px solid #334155;border-radius:12px;padding:14px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{font-size:11px;color:#94a3b8}
+input{padding:10px;border-radius:8px;border:none;background:#0f172a;color:white}
+input[readonly]{background:#020617;border:1px dashed #334155}
+button{margin-top:18px;padding:12px;background:#16a34a;color:white;border:none;border-radius:10px;font-size:15px}
+</style>
+</head>
+
+<body>
+<h2>VEHICLE ENTRY FORM (Tracking ID: {{ tracking_id }})</h2>
+
+<div class="grid">
+  <div class="card">
+    <h4>Vehicle</h4>
+    <img src="{{ vehicle_img }}">
+  </div>
+
+  <div class="card">
+    <h4>LPR</h4>
+    {% if lpr_img %}
+      <img src="{{ lpr_img }}">
+    {% else %}
+      <p>No LPR detected</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h4>Source</h4>
+    {% if is_video %}
+        <video controls autoplay>
+            <source src="{{ video_url }}" type="video/mp4">
+        </video>
+    {% else %}
+        <img src="{{ video_url }}">
+    {% endif %}
+  </div>
+</div>
+
+<div class="form-box">
+<form method="POST">
+  <div class="form-grid">
+
+    <div>
+      <label>Date & Time</label>
+      <input value="{{ datetime_now }}" readonly>
+    </div>
+
+    <div>
+      <label>Vehicle Type</label>
+      <input value="{{ vehicle_type }}" readonly>
+    </div>
+
+    <div>
+      <label>License Plate Number</label>
+      <input name="lpr_no" value="{{ ocr_text }}">
+    </div>
+
+    <div>
+      <label>Driver Person ID</label>
+      <input name="driver_person_id">
+    </div>
+
+  </div>
+
+  <button type="submit">SUBMIT</button>
+</form>
+</div>
+</body>
+</html>
