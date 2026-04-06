@@ -248,31 +248,31 @@ Each alert has 4 control buttons:
 ```mermaid
 flowchart TD
 
-A[User Uploads Image / Video / RTSP] --> B[Processing Engine (YOLO Detection + Tracking)]
+A[User Uploads Image Video or RTSP] --> B[Processing Engine YOLO Detection and Tracking]
 
-B --> C{Object Detected?}
+B --> C{Object Detected}
 
 C -->|Person| D[Person Alerts Generated]
 C -->|Vehicle| E[Vehicle Alerts Generated]
 
-D --> F[Alert Cards (UI Dashboard)]
+D --> F[Alert Cards UI Dashboard]
 E --> F
 
 F --> G{User Action}
 
-G -->|Next / Previous| H[Frame Navigation]
+G -->|Next Previous| H[Frame Navigation]
 G -->|Delete| I[Remove False Alert]
 G -->|Form| J[Open Form]
 
 %% PERSON FLOW
-J --> K{Person or Vehicle?}
+J --> K{Person or Vehicle}
 
 K -->|Person| L[Person Form]
 
 L --> M[Face Detection]
-M --> N{Face Recognized?}
+M --> N{Face Recognized}
 
-N -->|Yes| O[Auto-fill Person Data]
+N -->|Yes| O[Auto fill Person Data]
 N -->|No| P[Manual Data Entry]
 
 O --> Q[Guard Submits Entry]
@@ -284,17 +284,16 @@ Q --> S[Update guard_entry.csv]
 %% VEHICLE FLOW
 K -->|Vehicle| T[Vehicle Form]
 
-T --> U[LPR Detection (OCR)]
-U --> V[Auto-detect Vehicle Number]
+T --> U[LPR Detection OCR]
+U --> V[Auto detect Vehicle Number]
 
-V --> W[Manual Edit (if needed)]
+V --> W[Manual Edit if needed]
 W --> X[Guard Submits Entry]
 
 X --> Y[Update vehicle_entry.csv]
 
 %% SYSTEM LOGGING
-B --> Z[Update logs.csv (Tracking Data)]
-
+B --> Z[Update logs.csv Tracking Data]
 
 ---
 
