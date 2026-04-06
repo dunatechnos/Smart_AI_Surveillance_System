@@ -294,6 +294,7 @@ X --> Y[Update vehicle_entry.csv]
 
 %% SYSTEM LOGGING
 B --> Z[Update logs.csv Tracking Data]
+```
 
 ---
 
